@@ -36,6 +36,7 @@ TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
   const term = useRef<Terminal | null>(null);
   const pendingOutput = useRef("");
   const fitAddon = useRef<FitAddon | null>(null);
+  const fitTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAddon = useRef<SearchAddon | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,6 +49,24 @@ TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
   const historyIndex = useRef<number>(-1);
   const currentProcess = useRef<any>(null);
   const shellProcess = useRef<any>(null);
+
+  const scheduleFit = useCallback(() => {
+    if (fitTimeout.current) clearTimeout(fitTimeout.current);
+    fitTimeout.current = setTimeout(() => {
+      fitTimeout.current = null;
+      const element = terminalRef.current;
+      if (
+        !element?.isConnected ||
+        element.clientWidth === 0 ||
+        element.clientHeight === 0 ||
+        !term.current ||
+        !fitAddon.current
+      ) {
+        return;
+      }
+      fitAddon.current.fit();
+    }, 100);
+  }, []);
 
   const terminalThemes = {
     dark: {
@@ -311,10 +330,7 @@ TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
     // Handle terminal input
     terminal.onData(handleTerminalInput);
 
-    // Initial fit
-    setTimeout(() => {
-      fitAddonInstance.fit();
-    }, 100);
+    scheduleFit();
 
     // Welcome message
     terminal.writeln("🚀 WebContainer Terminal");
@@ -322,7 +338,7 @@ TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
     writePrompt();
 
     return terminal;
-  }, [theme, handleTerminalInput, writePrompt]);
+  }, [theme, handleTerminalInput, writePrompt, scheduleFit]);
 
   const connectToWebContainer = useCallback(async () => {
     if (!webContainerInstance || !term.current) return;
@@ -392,13 +408,7 @@ TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
     initializeTerminal();
 
     // Handle resize
-    const resizeObserver = new ResizeObserver(() => {
-      if (fitAddon.current) {
-        setTimeout(() => {
-          fitAddon.current?.fit();
-        }, 100);
-      }
-    });
+    const resizeObserver = new ResizeObserver(scheduleFit);
 
     if (terminalRef.current) {
       resizeObserver.observe(terminalRef.current);
@@ -406,18 +416,25 @@ TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
 
     return () => {
       resizeObserver.disconnect();
+      if (fitTimeout.current) {
+        clearTimeout(fitTimeout.current);
+        fitTimeout.current = null;
+      }
       if (currentProcess.current) {
         currentProcess.current.kill();
       }
       if (shellProcess.current) {
         shellProcess.current.kill();
       }
-      if (term.current) {
-        term.current.dispose();
-        term.current = null;
+      const terminal = term.current;
+      term.current = null;
+      fitAddon.current = null;
+      searchAddon.current = null;
+      if (terminal) {
+        terminal.dispose();
       }
     };
-  }, [initializeTerminal]);
+  }, [initializeTerminal, scheduleFit]);
 
   useEffect(() => {
     if (webContainerInstance && term.current && !isConnected) {
