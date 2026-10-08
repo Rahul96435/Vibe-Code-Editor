@@ -1,0 +1,4 @@
+import Link from "next/link";
+export function Footer() {
+  return <footer className="relative z-20 border-t border-white/10 bg-[#09090b] text-zinc-400"><div className="mx-auto grid max-w-7xl gap-8 px-6 py-10 sm:grid-cols-[1fr_auto_auto]"><div><p className="font-semibold text-white">VibeCode</p><p className="mt-2 max-w-sm text-xs">A complete development workspace powered by Monaco, WebContainers, and Next.js.</p></div><div className="grid gap-2 text-xs"><strong className="text-zinc-200">Product</strong><Link href="/#features">Features</Link><Link href="/#templates">Templates</Link><Link href="/docs">Docs</Link></div><div className="grid gap-2 text-xs"><strong className="text-zinc-200">Resources</strong><Link href="https://github.com/BRaj-05/Code-Editor">GitHub</Link><span>Built with Next.js</span></div></div><div className="border-t border-white/5 px-6 py-4 text-center text-[11px]">© {new Date().getFullYear()} VibeCode Editor</div></footer>;
+}
