@@ -30,6 +30,11 @@ export async function chatWithLLM(
   const baseUrl = process.env.LLM_BASE_URL?.trim();
 
   if (!apiKey || !model || !baseUrl) {
+    console.error("[LLM] Server configuration is incomplete", {
+      apiKeyConfigured: Boolean(apiKey),
+      modelConfigured: Boolean(model),
+      baseUrlConfigured: Boolean(baseUrl),
+    });
     throw new LLMServiceError(
       "AI service is not configured. Ask the administrator to check its server settings.",
       503,
@@ -56,6 +61,7 @@ export async function chatWithLLM(
       `${baseUrl.replace(/\/+$/, "")}/`,
     );
   } catch {
+    console.error("[LLM] Provider URL configuration is invalid");
     throw new LLMServiceError(
       "AI service configuration is invalid. Check LLM_BASE_URL.",
       500,
@@ -80,7 +86,14 @@ export async function chatWithLLM(
       signal: AbortSignal.timeout(30_000),
     });
   } catch (error) {
-    if (error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)) {
+    const timedOut =
+      error instanceof Error &&
+      ["AbortError", "TimeoutError"].includes(error.name);
+    console.error("[LLM] Provider request failed", {
+      reason: timedOut ? "timeout" : "network",
+      errorName: error instanceof Error ? error.name : "unknown",
+    });
+    if (timedOut) {
       throw new LLMServiceError(
         "AI service timed out. Please try again.",
         504,
@@ -90,6 +103,18 @@ export async function chatWithLLM(
       "AI service is temporarily unavailable. Please try again.",
       503,
     );
+  }
+
+  const requestId =
+    response.headers.get("x-goog-request-id") ??
+    response.headers.get("x-request-id") ??
+    response.headers.get("request-id") ??
+    undefined;
+  if (!response.ok) {
+    console.error("[LLM] Provider returned an error response", {
+      status: response.status,
+      requestId,
+    });
   }
 
   if (response.status === 429) {
@@ -115,6 +140,10 @@ export async function chatWithLLM(
   try {
     data = await response.json();
   } catch {
+    console.error("[LLM] Provider returned invalid JSON", {
+      status: response.status,
+      requestId,
+    });
     throw new LLMServiceError(
       "AI service returned an invalid response. Please try again.",
       502,
@@ -122,6 +151,10 @@ export async function chatWithLLM(
   }
 
   if (!data || typeof data !== "object" || Array.isArray(data)) {
+    console.error("[LLM] Provider returned an unexpected response shape", {
+      status: response.status,
+      requestId,
+    });
     throw new LLMServiceError(
       "AI service returned an invalid response. Please try again.",
       502,
@@ -135,6 +168,10 @@ export async function chatWithLLM(
   };
   const content = result.choices?.[0]?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
+    console.error("[LLM] Provider returned an empty completion", {
+      status: response.status,
+      requestId,
+    });
     throw new LLMServiceError(
       "AI service returned an empty response. Please try again.",
       502,
