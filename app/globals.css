@@ -135,7 +135,8 @@
   .ide-icon[aria-pressed="true"] { @apply bg-red-500/15 text-red-400; }
   .ide-search { @apply hidden h-7 min-w-52 items-center justify-between rounded-sm border border-white/10 bg-black/25 px-2.5 text-[11px] text-zinc-400 hover:border-white/20 md:flex; }
   .ide-search kbd { @apply ml-4 rounded-sm border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px]; }
-  .landing-grid { background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 48px 48px; }
+  .landing-grid { --landing-grid-line: rgba(0,0,0,.055); background-image: linear-gradient(var(--landing-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--landing-grid-line) 1px, transparent 1px); background-size: 48px 48px; }
+  .dark .landing-grid { --landing-grid-line: rgba(255,255,255,.035); }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }

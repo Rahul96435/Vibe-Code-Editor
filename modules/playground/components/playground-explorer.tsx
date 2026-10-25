@@ -11,11 +11,6 @@ import {
   MoreHorizontal,
   Trash2,
   Edit3,
-  Search,
-  Play,
-  Blocks,
-  Sparkles,
-  Settings,
   RefreshCw,
 } from "lucide-react";
 
@@ -140,44 +135,7 @@ export function TemplateFileTree({
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <aside
-        className="absolute inset-y-0 left-0 z-10 flex w-11 flex-col items-center border-r border-sidebar-border bg-sidebar py-2 text-sidebar-foreground"
-        aria-label="Workspace activity"
-      >
-        {[
-          [File, "Explorer"],
-          [Search, "Search"],
-          [Play, "Run"],
-          [Blocks, "Extensions"],
-          [Sparkles, "AI"],
-        ].map(([Icon, label], index) => {
-          const ActivityIcon = Icon as typeof File;
-
-          return (
-            <button
-              key={label as string}
-              className={`my-1 inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                index === 0
-                  ? "border-l-2 border-red-500 bg-sidebar-accent text-sidebar-accent-foreground"
-                  : ""
-              }`}
-              aria-label={label as string}
-              title={label as string}
-            >
-              <ActivityIcon size={17} />
-            </button>
-          );
-        })}
-
-        <button
-          className="mt-auto inline-flex size-7 items-center justify-center rounded-sm text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          aria-label="Settings"
-          title="Settings"
-        >
-          <Settings size={17} />
-        </button>
-      </aside>
-      <SidebarContent className="bg-sidebar pl-11 text-sidebar-foreground">
+      <SidebarContent className="bg-sidebar text-sidebar-foreground">
         <SidebarGroup>
           <SidebarGroupLabel className="text-[10px] font-semibold tracking-normal text-sidebar-foreground/70">
             {title.toUpperCase()}
