@@ -87,6 +87,20 @@ export async function chatWithLLM(
         max_tokens: options.maxTokens,
         temperature: options.temperature ?? 0.7,
         stream: false,
+        // Gemini 3.8 defaults to medium thinking. Keep interactive chat fast;
+        // the OpenAI-compatible endpoint accepts this Gemini-specific option.
+        ...(endpoint.hostname === "generativelanguage.googleapis.com"
+          ? {
+              extra_body: {
+                google: {
+                  thinking_config: {
+                    thinking_level: "low",
+                    include_thoughts: false,
+                  },
+                },
+              },
+            }
+          : {}),
       }),
       signal: AbortSignal.timeout(LLM_REQUEST_TIMEOUT_MS),
     });
