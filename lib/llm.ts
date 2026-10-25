@@ -11,6 +11,11 @@ export interface LLMResult {
   tokens?: number;
 }
 
+// Some compatible providers need longer for larger prompts or a cold start.
+// Keep this below the function platform's request limit while allowing the UI
+// to receive a complete (non-streamed) response.
+const LLM_REQUEST_TIMEOUT_MS = 55_000;
+
 export class LLMServiceError extends Error {
   constructor(
     message: string,
@@ -83,7 +88,7 @@ export async function chatWithLLM(
         temperature: options.temperature ?? 0.7,
         stream: false,
       }),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(LLM_REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
     const timedOut =
