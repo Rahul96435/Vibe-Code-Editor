@@ -10,10 +10,17 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
      */
     async signIn({ user, account }) {
       if (!user || !account) return false;
+      // Both OAuth providers normally return an email, but GitHub users can
+      // hide it. Prisma requires an email for User, so fail cleanly instead
+      // of throwing from a non-null assertion and showing Auth.js AccessDenied.
+      if (!user.email) {
+        console.error(`[Auth] ${account.provider} did not return an email address`);
+        return false;
+      }
 
       // Check if the user already exists
       const existingUser = await db.user.findUnique({
-        where: { email: user.email! },
+        where: { email: user.email },
       });
 
       // If user does not exist, create a new one
