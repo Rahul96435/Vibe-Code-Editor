@@ -29,7 +29,7 @@ VibeCode Editor is a modern web-based code editor built with **Next.js 16**, **R
 
 ## Database model
 
-The application uses MongoDB through Prisma. The schema defines six collections. User-owned records reference their owner with an ID, and related account, playground, bookmark, template-file, and chat-message records are removed when their parent is deleted.
+The application uses MongoDB through Prisma. The schema defines six collections. Each model's Prisma `id` maps to MongoDB's `_id`. Related records store reference IDs (such as `userId` and `playgroundId`); these are Prisma relations and are not SQL-style foreign-key constraints enforced by MongoDB. Prisma's `onDelete: Cascade` relations describe the configured delete behavior.
 
 ```mermaid
 erDiagram
@@ -41,7 +41,7 @@ erDiagram
     Playground ||--o| TemplateFile : "stores template files"
 
     User {
-        string id PK
+        string id PK "MongoDB _id"
         string email UK
         string name
         string image
@@ -51,18 +51,19 @@ erDiagram
     }
 
     Account {
-        string id PK
-        string userId FK
+        string id PK "MongoDB _id"
+        string userId "ref User.id; indexed"
         string provider
         string providerAccountId
         string type
         string accessToken
         string refreshToken
+        string provider_providerAccountId "unique pair"
     }
 
     Playground {
-        string id PK
-        string userId FK
+        string id PK "MongoDB _id"
+        string userId "ref User.id"
         string title
         string description
         Templates template
@@ -71,31 +72,32 @@ erDiagram
     }
 
     StarMark {
-        string id PK
-        string userId FK
-        string playgroundId FK
+        string id PK "MongoDB _id"
+        string userId "ref User.id"
+        string playgroundId "ref Playground.id"
         boolean isMarked
         datetime createdAt
+        string userId_playgroundId "unique pair"
     }
 
     TemplateFile {
-        string id PK
-        string playgroundId FK, UK
+        string id PK "MongoDB _id"
+        string playgroundId "ref Playground.id; unique"
         json content
         datetime createdAt
         datetime updatedAt
     }
 
     ChatMessage {
-        string id PK
-        string userId FK
+        string id PK "MongoDB _id"
+        string userId "ref User.id; indexed"
         string role
         string content
         datetime createdAt
     }
 ```
 
-`UserRole` can be `ADMIN`, `USER`, or `PREMIUM_USER`. `Templates` can be `REACT`, `NEXTJS`, `EXPRESS`, `VUE`, `HONO`, or `ANGULAR`. The schema also enforces unique user emails, unique provider/account pairs, unique user/playground bookmarks, and one `TemplateFile` record per playground. MongoDB stores these models as collections rather than SQL tables.
+`UserRole` can be `ADMIN`, `USER`, or `PREMIUM_USER`. `Templates` can be `REACT`, `NEXTJS`, `EXPRESS`, `VUE`, `HONO`, or `ANGULAR`. Prisma defines a unique email, a unique provider/account pair, a unique user/playground pair for bookmarks, and a unique `playgroundId` for `TemplateFile`; it also defines indexes on `Account.userId` and `ChatMessage.userId`. These are MongoDB collections, and the `ref` labels in the diagram describe Prisma/application relationships rather than SQL foreign keys.
 
 ## Repository structure
 
