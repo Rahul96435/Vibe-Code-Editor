@@ -27,6 +27,76 @@ VibeCode Editor is a modern web-based code editor built with **Next.js 16**, **R
 - `app/playground/[id]` — interactive editor page with file explorer and preview.
 - `modules/webcontainers` — WebContainer integration for local preview and file writes.
 
+## Database model
+
+The application uses MongoDB through Prisma. The schema defines six collections. User-owned records reference their owner with an ID, and related account, playground, bookmark, template-file, and chat-message records are removed when their parent is deleted.
+
+```mermaid
+erDiagram
+    User ||--o{ Account : "authenticates with"
+    User ||--o{ Playground : "owns"
+    User ||--o{ StarMark : "creates"
+    User ||--o{ ChatMessage : "writes"
+    Playground ||--o{ StarMark : "is bookmarked by"
+    Playground ||--o| TemplateFile : "stores template files"
+
+    User {
+        string id PK
+        string email UK
+        string name
+        string image
+        UserRole role
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Account {
+        string id PK
+        string userId FK
+        string provider
+        string providerAccountId
+        string type
+        string accessToken
+        string refreshToken
+    }
+
+    Playground {
+        string id PK
+        string userId FK
+        string title
+        string description
+        Templates template
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    StarMark {
+        string id PK
+        string userId FK
+        string playgroundId FK
+        boolean isMarked
+        datetime createdAt
+    }
+
+    TemplateFile {
+        string id PK
+        string playgroundId FK, UK
+        json content
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ChatMessage {
+        string id PK
+        string userId FK
+        string role
+        string content
+        datetime createdAt
+    }
+```
+
+`UserRole` can be `ADMIN`, `USER`, or `PREMIUM_USER`. `Templates` can be `REACT`, `NEXTJS`, `EXPRESS`, `VUE`, `HONO`, or `ANGULAR`. The schema also enforces unique user emails, unique provider/account pairs, unique user/playground bookmarks, and one `TemplateFile` record per playground. MongoDB stores these models as collections rather than SQL tables.
+
 ## Repository structure
 
 - `app/` — Next.js app routes, pages, and API route definitions.
